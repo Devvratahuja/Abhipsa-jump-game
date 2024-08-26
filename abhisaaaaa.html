@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumping Game for Abhipsa</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+        }
+        #game {
+            width: 100vw;
+            height: 100vh;
+            background-color: #f0f8ff;
+            position: relative;
+            overflow: hidden;
+        }
+        #character {
+            width: 50px;
+            height: 50px;
+            background-image: url('girl.png');
+            background-size: cover;
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+        }
+        #obstacle {
+            width: 50px;
+            height: 50px;
+            background-image: url('pigeon.png');
+            background-size: cover;
+            position: absolute;
+            bottom: 50px;
+            right: -50px;
+            animation: moveObstacle 2s linear infinite;
+        }
+        #dev {
+            width: 30px;
+            height: 30px;
+            background-image: url('dev.png');
+            background-size: cover;
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            animation: moveDev 3s linear infinite;
+        }
+        @keyframes moveObstacle {
+            0% { right: -50px; }
+            100% { right: 100vw; }
+        }
+        @keyframes moveDev {
+            0% { right: -30px; top: -30px; }
+            50% { right: 50vw; top: 60vh; }  /* Lowered to make it catchable */
+            100% { right: 100vw; top: 10vh; }  /* Lowered to make it catchable */
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="character"></div>
+        <div id="obstacle"></div>
+        <div id="dev"></div>
+    </div>
+
+    <!-- Add the audio element for background music -->
+    <audio id="bgMusic" loop>
+        <source src="background-music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <!-- Play button for music -->
+    <button onclick="document.getElementById('bgMusic').play()">Play Music</button>
+
+    <script>
+        const character = document.getElementById('character');
+        const obstacle = document.getElementById('obstacle');
+        const dev = document.getElementById('dev');
+        let isJumping = false;
+        let score = 0;
+        let lives = 3;
+
+        // Jump on screen tap
+        document.addEventListener('touchstart', function() {
+            if (!isJumping) {
+                jump();
+            }
+        });
+
+        function jump() {
+            isJumping = true;
+            let jumpHeight = 0;
+            let jumpInterval = setInterval(function() {
+                if (jumpHeight >= 100) {
+                    clearInterval(jumpInterval);
+                    let fallInterval = setInterval(function() {
+                        if (jumpHeight <= 0) {
+                            clearInterval(fallInterval);
+                            isJumping = false;
+                        } else {
+                            jumpHeight -= 5;
+                            character.style.bottom = jumpHeight + 50 + 'px';
+                        }
+                    }, 20);
+                } else {
+                    jumpHeight += 5;
+                    character.style.bottom = jumpHeight + 50 + 'px';
+                }
+            }, 20);
+        }
+
+        setInterval(function() {
+            const characterRect = character.getBoundingClientRect();
+            const obstacleRect = obstacle.getBoundingClientRect();
+            const devRect = dev.getBoundingClientRect();
+
+            // Check collision with obstacle (pigeon)
+            if (
+                characterRect.right > obstacleRect.left &&
+                characterRect.left < obstacleRect.right &&
+                characterRect.bottom > obstacleRect.top &&
+                characterRect.top < obstacleRect.bottom
+            ) {
+                lives--;
+                if (lives === 0) {
+                    alert('Game Over! Your score: ' + score);
+                    score = 0;
+                    lives = 3;
+                }
+            }
+
+            // Check collision with dev (extra life)
+            if (
+                characterRect.right > devRect.left &&
+                characterRect.left < devRect.right &&
+                characterRect.bottom > devRect.top &&
+                characterRect.top < devRect.bottom
+            ) {
+                lives++;
+                dev.style.display = 'none'; // Hide dev after it's caught
+                setTimeout(() => {
+                    dev.style.display = 'block'; // Show dev again after 3 seconds
+                }, 3000);
+            }
+
+            score++;
+        }, 10);
+    </script>
+</body>
+</html>
